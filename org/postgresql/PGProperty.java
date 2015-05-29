@@ -7,9 +7,7 @@
 */
 package org.postgresql;
 
-import java.sql.Connection;
 import java.sql.DriverPropertyInfo;
-import java.sql.Statement;
 import java.util.Properties;
 
 import org.postgresql.util.GT;

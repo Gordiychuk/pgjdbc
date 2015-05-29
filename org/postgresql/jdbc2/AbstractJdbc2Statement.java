@@ -189,6 +189,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
         return new StatementFinalizer(this);
     }
 
+
     public abstract ResultSet createResultSet(Query originalQuery, Field[] fields, List tuples, ResultCursor cursor)
     throws SQLException;
 
