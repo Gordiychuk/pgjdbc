@@ -1346,6 +1346,10 @@ public abstract class AbstractJdbc2Connection implements BaseConnection
         autoCloseUnclosedStatements = flag;
     }
 
+    /**
+     * @see PGProperty#AUTO_CLOSE_UNCLOSED_STATEMENTS
+     * @return true if new Statement instance should be wrap to finalizer and close own resources on GC phase
+     */
     public boolean isAutoCloseUnclosedStatements()
     {
         return autoCloseUnclosedStatements;
