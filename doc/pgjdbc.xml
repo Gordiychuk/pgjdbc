@@ -692,11 +692,10 @@ openssl pkcs8 -topk8 -in client.key -out client.pk8 -outform DER -v1 PBE-SHA1-3D
         </para>
 		 <note>
 			<para>
-				Creating finalizable objects is very expensive in lots of JVM.
-				It dramatically impacts <classname>Statement</classname> instantiation
-				and increases time spent in garbage collection, so avoid using autoCloseUnclosedStatements=true
-        for highly loaded applications unless you are sure your JVM can crater
-        finalizer traffic.
+                Creating finalizable objects is expensive in most JVMs.
+                It dramatically impacts <classname>Statement</classname> instantiation and increases time spent in garbage collection.
+                Avoid using autoCloseUnclosedStatements=true unless you are sure your JVM can handle the finalizer overhead.
+                Properly written applications that make sure to close all JDBC resources will not need to enable this property.
 			</para>
 		 </note>
        </listitem>
