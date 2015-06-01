@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
      * We could use {@link java.util.concurrent.atomic.AtomicReference}, however it would
      * increase heap size retained by the finalizer.
      */
-    private AtomicReferenceFieldUpdater<StatementFinalizer, Statement> STATEMENT_UPDATER =
+    private static final AtomicReferenceFieldUpdater<StatementFinalizer, Statement> STATEMENT_UPDATER =
         AtomicReferenceFieldUpdater.newUpdater(StatementFinalizer.class, Statement.class, "statement");
 
     private volatile Statement statement;
