@@ -8,6 +8,7 @@
 package org.postgresql;
 
 import java.sql.DriverPropertyInfo;
+import java.sql.Statement;
 import java.util.Properties;
 
 import org.postgresql.util.GT;
@@ -105,6 +106,15 @@ public enum PGProperty
      * When connections that are not explicitly closed are garbage collected, log the stacktrace from the opening of the connection to trace the leak source.
      */
     LOG_UNCLOSED_CONNECTIONS("logUnclosedConnections", "false", "When connections that are not explicitly closed are garbage collected, log the stacktrace from the opening of the connection to trace the leak source"),
+
+    /**
+     * Close statements that are not explicitly closed by the application.
+     * <p><b>Note:</b> automatic connection management is expensive, so it should be used as a last-resort only.
+     * </p>
+     * @see Statement#close()
+     * @see Object#finalize()
+     */
+    AUTO_CLOSE_UNCLOSED_STATEMENTS("autoCloseUnclosedStatements", "false", "Close statements that are not explicitly closed by the application. Automatic management is expensive, so avoid using this parameter"),
 
     /**
      * Enable optimization that disables column name sanitiser.

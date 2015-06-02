@@ -41,6 +41,9 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class FinalizeStatement
 {
+    @Param({"false", "true"})
+    private boolean autoCloseStatements;
+
     @Param({"0", "1", "10", "100"})
     private int leakPct;
 
@@ -52,9 +55,15 @@ public class FinalizeStatement
     public void setUp() throws SQLException
     {
         Properties props = ConnectionUtil.getProperties();
+        //not uses PGProperty.AUTO_CLOSE_UNCLOSED_STATEMENTS for run benchmark with old driver version
+        props.setProperty("autoCloseUnclosedStatements", String.valueOf(autoCloseStatements));
 
         connection = DriverManager.getConnection(ConnectionUtil.getURL(), props);
         leakPctFloat = 0.001f * leakPct;
+        if (!autoCloseStatements && leakPct > 0)
+        {
+            throw new IllegalArgumentException("No much sense in testing leak performance while statements are not closed");
+        }
     }
 
     @TearDown(Level.Trial)

@@ -155,4 +155,13 @@ public interface PGConnection
      * @return the quoted literal
      */
     public String escapeLiteral(String literal) throws SQLException;
+
+    /**
+     * Set if statements should be closed automatically when application fails to close them properly.
+     * Note: automatic connection management is expensive, so it should be used as a last-resort only.
+     * @param flag true if automatic connection management should be enabled
+     *
+     * @see PGProperty#AUTO_CLOSE_UNCLOSED_STATEMENTS
+     */
+    void setAutoCloseUnclosedStatements(boolean flag);
 }
