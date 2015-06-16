@@ -119,8 +119,9 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
     private static final short ESC_FUNCTION = 4;
     private static final short ESC_OUTERJOIN = 5;
     private static final short ESC_ESCAPECHAR = 7;
-    
-    protected final CachedQuery preparedQuery;              // Query fragments for prepared statement.
+
+    protected Query preparedQuery;
+    protected final CachedQuery preparedCachedQuery;              // Query fragments for prepared statement.
     protected final ParameterList preparedParameters; // Parameter values for prepared statement.
     protected Query lastSimpleQuery;
 
@@ -147,7 +148,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
     public AbstractJdbc2Statement (AbstractJdbc2Connection c, int rsType, int rsConcurrency) throws SQLException
     {
         this.connection = c;
-        this.preparedQuery = null;
+        this.preparedCachedQuery = null;
         this.preparedParameters = null;
         this.lastSimpleQuery = null;
         forceBinaryTransfers |= c.getForceBinary();
@@ -167,8 +168,9 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
             this.outParmBeforeFunc = cachedQuery.outParmBeforeFunc;
         }
 
-        this.preparedQuery = cachedQuery;
-        this.preparedParameters = preparedQuery.query.createParameterList();
+        this.preparedCachedQuery = cachedQuery;
+        this.preparedQuery = preparedCachedQuery.query;
+        this.preparedParameters = preparedCachedQuery.query.createParameterList();
 
         int inParamCount =  preparedParameters.getInParameterCount() + 1;
         this.testReturn = new int[inParamCount];
@@ -265,7 +267,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
      */
     public java.sql.ResultSet executeQuery(String p_sql) throws SQLException
     {
-        if (preparedQuery != null)
+        if (preparedCachedQuery != null)
             throw new PSQLException(GT.tr("Can''t use query methods that take a query string on a PreparedStatement."),
                                     PSQLState.WRONG_OBJECT_TYPE);
 
@@ -329,7 +331,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
      */
     public int executeUpdate(String p_sql) throws SQLException
     {
-        if (preparedQuery != null)
+        if (preparedCachedQuery != null)
             throw new PSQLException(GT.tr("Can''t use query methods that take a query string on a PreparedStatement."),
                                     PSQLState.WRONG_OBJECT_TYPE);
         if( isFunction )
@@ -398,7 +400,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
      */
     public boolean execute(String p_sql) throws SQLException
     {
-        if (preparedQuery != null)
+        if (preparedCachedQuery != null)
             throw new PSQLException(GT.tr("Can''t use query methods that take a query string on a PreparedStatement."),
                                     PSQLState.WRONG_OBJECT_TYPE);
 
@@ -424,7 +426,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
     {
         checkClosed();
    
-        execute(preparedQuery.query, preparedParameters, flags);
+        execute(preparedCachedQuery.query, preparedParameters, flags);
 
         // If we are executing and there are out parameters 
         // callable statement function set the return data
@@ -540,10 +542,10 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
 
         // Only use named statements after we hit the threshold. Note that only
         // named statements can be transferred in binary format.
-        if (preparedQuery != null && preparedQuery.query == queryToExecute)
+        if (preparedCachedQuery != null && preparedCachedQuery.query == queryToExecute)
         {
-            preparedQuery.increaseExecuteCount();
-            if ((m_prepareThreshold == 0 || preparedQuery.getExecuteCount() < m_prepareThreshold) && !forceBinaryTransfers)
+            preparedCachedQuery.increaseExecuteCount();
+            if ((m_prepareThreshold == 0 || preparedCachedQuery.getExecuteCount() < m_prepareThreshold) && !forceBinaryTransfers)
                 flags |= QueryExecutor.QUERY_ONESHOT;
         }
 
@@ -859,8 +861,8 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
         
         closeForNextExecution();
 
-        if (preparedQuery != null)
-            ((AbstractJdbc2Connection) connection).releaseQuery(preparedQuery);
+        if (preparedCachedQuery != null)
+            ((AbstractJdbc2Connection) connection).releaseQuery(preparedCachedQuery);
 
         isClosed = true;
     }
@@ -2279,10 +2281,10 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
      */
     public String toString()
     {
-        if (preparedQuery == null)
+        if (preparedCachedQuery == null)
             return super.toString();
 
-        return preparedQuery.query.toString(preparedParameters);
+        return preparedCachedQuery.query.toString(preparedParameters);
     }
 
 
@@ -2393,7 +2395,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
     }
 
     public boolean isUseServerPrepare() {
-        return (preparedQuery != null && m_prepareThreshold != 0 && preparedQuery.getExecuteCount() + 1 >= m_prepareThreshold);
+        return (preparedCachedQuery != null && m_prepareThreshold != 0 && preparedCachedQuery.getExecuteCount() + 1 >= m_prepareThreshold);
     }
 
     protected void checkClosed() throws SQLException
@@ -2409,7 +2411,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
     {
         checkClosed();
 
-        if (preparedQuery != null)
+        if (preparedCachedQuery != null)
             throw new PSQLException(GT.tr("Can''t use query methods that take a query string on a PreparedStatement."),
                                     PSQLState.WRONG_OBJECT_TYPE);
 
@@ -2640,11 +2642,11 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
         }
 
         // Only use named statements after we hit the threshold
-        if (preparedQuery != null)
+        if (preparedCachedQuery != null)
         {
-            preparedQuery.increaseExecuteCount(queries.length);
+            preparedCachedQuery.increaseExecuteCount(queries.length);
         }
-        if (m_prepareThreshold == 0 || preparedQuery == null || preparedQuery.getExecuteCount() < m_prepareThreshold) {
+        if (m_prepareThreshold == 0 || preparedCachedQuery == null || preparedCachedQuery.getExecuteCount() < m_prepareThreshold) {
             flags |= QueryExecutor.QUERY_ONESHOT;
         } else {
             // If a batch requests generated keys and isn't already described,
@@ -2773,7 +2775,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
         }
 
         // we need to create copies of our parameters, otherwise the values can be changed
-        batchStatements.add(preparedQuery.query);
+        batchStatements.add(preparedCachedQuery.query);
         batchParameters.add(preparedParameters.copy());
     }
 
@@ -2790,7 +2792,7 @@ public abstract class AbstractJdbc2Statement implements BaseStatement
 
             int flags = QueryExecutor.QUERY_ONESHOT | QueryExecutor.QUERY_DESCRIBE_ONLY | QueryExecutor.QUERY_SUPPRESS_BEGIN;
             StatementResultHandler handler = new StatementResultHandler();
-            connection.getQueryExecutor().execute(preparedQuery.query, preparedParameters, handler, 0, 0, flags);
+            connection.getQueryExecutor().execute(preparedCachedQuery.query, preparedParameters, handler, 0, 0, flags);
             ResultWrapper wrapper = handler.getResults();
             if (wrapper != null) {
                 rs = wrapper.getResultSet();
