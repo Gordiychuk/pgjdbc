@@ -10,14 +10,7 @@
 package org.postgresql.core.v3;
 
 import org.postgresql.PGProperty;
-import org.postgresql.core.ConnectionFactory;
-import org.postgresql.core.Encoding;
-import org.postgresql.core.Logger;
-import org.postgresql.core.PGStream;
-import org.postgresql.core.ProtocolConnection;
-import org.postgresql.core.ServerVersion;
-import org.postgresql.core.SetupQueryRunner;
-import org.postgresql.core.Utils;
+import org.postgresql.core.*;
 import org.postgresql.core.v2.SocketFactoryFactory;
 import org.postgresql.hostchooser.GlobalHostStatusTracker;
 import org.postgresql.hostchooser.HostChooser;
@@ -198,8 +191,10 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
         paramList.add(new String[]{"client_encoding", "UTF8"});
         paramList.add(new String[]{"DateStyle", "ISO"});
         paramList.add(new String[]{"TimeZone", createPostgresTimeZone()});
-        String assumeMinServerVersion = PGProperty.ASSUME_MIN_SERVER_VERSION.get(info);
-        if (Utils.parseServerVersionStr(assumeMinServerVersion)
+
+        Version assumeVersion = ServerVersion.from(PGProperty.ASSUME_MIN_SERVER_VERSION.get(info));
+
+        if (assumeVersion.getVersionNum()
             >= ServerVersion.v9_0.getVersionNum()) {
           // User is explicitly telling us this is a 9.0+ server so set properties here:
           paramList.add(new String[]{"extra_float_digits", "3"});
@@ -212,11 +207,15 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
           paramList.add(new String[]{"extra_float_digits", "2"});
         }
 
+        String replication = PGProperty.REPLICATION.get(info);
+        if(replication != null && assumeVersion.getVersionNum() >= ServerVersion.v9_1.getVersionNum()) {
+          paramList.add(new String[]{"replication", replication});
+        }
+
         String currentSchema = PGProperty.CURRENT_SCHEMA.get(info);
         if (currentSchema != null) {
           paramList.add(new String[]{"search_path", currentSchema});
         }
-
         sendStartupPacket(newStream, paramList, logger);
 
         // Do authentication (until AuthenticationOk).
