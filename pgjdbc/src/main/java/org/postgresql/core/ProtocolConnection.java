@@ -126,6 +126,11 @@ public interface ProtocolConnection {
   QueryExecutor getQueryExecutor();
 
   /**
+   * @return the ReplicationProtocol instance for this connection.
+   */
+  ReplicationProtocol getReplicationProtocol();
+
+  /**
    * Sends a query cancellation for this connection.
    *
    * @throws SQLException if something goes wrong.

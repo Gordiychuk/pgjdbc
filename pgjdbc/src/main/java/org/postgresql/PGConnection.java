@@ -11,6 +11,7 @@ package org.postgresql;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.fastpath.Fastpath;
 import org.postgresql.largeobject.LargeObjectManager;
+import org.postgresql.replication.fluent.ChainedStreamBuilder;
 import org.postgresql.util.PGobject;
 
 import java.sql.SQLException;
@@ -167,4 +168,13 @@ public interface PGConnection {
    * @throws SQLException if something goes wrong
    */
   public String escapeLiteral(String literal) throws SQLException;
+
+  /**
+   * Api available only if connection was create with required for replication properties: {@link
+   * PGProperty#REPLICATION} and {@link PGProperty#ASSUME_MIN_SERVER_VERSION}. Without it property
+   * building replication stream fail with exception.
+   *
+   * @return not null fluent api for build replication stream
+   */
+  ChainedStreamBuilder replicationStream();
 }

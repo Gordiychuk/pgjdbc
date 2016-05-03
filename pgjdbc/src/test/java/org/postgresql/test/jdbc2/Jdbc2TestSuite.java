@@ -11,6 +11,9 @@ package org.postgresql.test.jdbc2;
 import org.postgresql.core.v2.V2ParameterListTests;
 import org.postgresql.core.v3.V3ParameterListTests;
 import org.postgresql.jdbc.DeepBatchedInsertStatementTest;
+import org.postgresql.replication.LogSequenceNumberTest;
+import org.postgresql.replication.LogicalReplicationTest;
+import org.postgresql.replication.PhysicalReplicationTest;
 import org.postgresql.test.CursorFetchBinaryTest;
 import org.postgresql.test.TestUtil;
 
@@ -119,16 +122,22 @@ public class Jdbc2TestSuite extends TestSuite {
     suite.addTestSuite(V2ParameterListTests.class);
     suite.addTestSuite(V3ParameterListTests.class);
 
+    suite.addTest(new JUnit4TestAdapter(LogSequenceNumberTest.class));
+
     Connection conn = TestUtil.openDB();
     if (TestUtil.isProtocolVersion(conn, 3)) {
       suite.addTestSuite(CopyTest.class);
       suite.addTestSuite(CopyLargeFileTest.class);
     }
-    if(TestUtil.haveMinimumServerVersion(conn, "9.1")) {
-      suite.addTest(new JUnit4TestAdapter(CopyBothResponseTest.class));
-    }
+
     if (TestUtil.haveMinimumServerVersion(conn, "9.3")) {
       suite.addTestSuite(ServerErrorTest.class);
+    }
+
+    if (TestUtil.haveMinimumServerVersion(conn, "9.4")) {
+      suite.addTest(new JUnit4TestAdapter(CopyBothResponseTest.class));
+      suite.addTest(new JUnit4TestAdapter(LogicalReplicationTest.class));
+      suite.addTest(new JUnit4TestAdapter(PhysicalReplicationTest.class));
     }
 
     if (TestUtil.haveMinimumServerVersion(conn, "9.5")) {

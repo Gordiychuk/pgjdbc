@@ -15,6 +15,7 @@ import org.postgresql.core.Logger;
 import org.postgresql.core.PGStream;
 import org.postgresql.core.ProtocolConnection;
 import org.postgresql.core.QueryExecutor;
+import org.postgresql.core.ReplicationProtocol;
 import org.postgresql.core.Utils;
 import org.postgresql.util.HostSpec;
 
@@ -86,6 +87,10 @@ class ProtocolConnectionImpl implements ProtocolConnection {
 
   public QueryExecutor getQueryExecutor() {
     return executor;
+  }
+
+  public ReplicationProtocol getReplicationProtocol() {
+    return new V2ReplicationProtocol();
   }
 
   public void sendQueryCancel() throws SQLException {

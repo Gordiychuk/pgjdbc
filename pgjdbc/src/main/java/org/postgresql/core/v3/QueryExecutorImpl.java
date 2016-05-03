@@ -823,7 +823,9 @@ public class QueryExecutorImpl implements QueryExecutor {
       pgStream.SendInteger4(4);
       pgStream.flush();
 
-      processCopyResults(op, true);
+      do {
+        processCopyResults(op, true);
+      } while (hasLock(op));
       return op.getHandledRowCount();
     } catch (IOException ioe) {
       throw new PSQLException(GT.tr("Database connection failed when ending copy"),

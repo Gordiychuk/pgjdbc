@@ -10,7 +10,15 @@
 package org.postgresql.core.v3;
 
 import org.postgresql.PGProperty;
-import org.postgresql.core.*;
+import org.postgresql.core.ConnectionFactory;
+import org.postgresql.core.Encoding;
+import org.postgresql.core.Logger;
+import org.postgresql.core.PGStream;
+import org.postgresql.core.ProtocolConnection;
+import org.postgresql.core.ServerVersion;
+import org.postgresql.core.SetupQueryRunner;
+import org.postgresql.core.Utils;
+import org.postgresql.core.Version;
 import org.postgresql.core.v2.SocketFactoryFactory;
 import org.postgresql.hostchooser.GlobalHostStatusTracker;
 import org.postgresql.hostchooser.HostChooser;
@@ -208,7 +216,7 @@ public class ConnectionFactoryImpl extends ConnectionFactory {
         }
 
         String replication = PGProperty.REPLICATION.get(info);
-        if(replication != null && assumeVersion.getVersionNum() >= ServerVersion.v9_1.getVersionNum()) {
+        if (replication != null && assumeVersion.getVersionNum() >= ServerVersion.v9_4.getVersionNum()) {
           paramList.add(new String[]{"replication", replication});
         }
 

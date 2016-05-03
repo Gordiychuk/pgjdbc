@@ -15,7 +15,9 @@ import org.postgresql.core.Logger;
 import org.postgresql.core.PGStream;
 import org.postgresql.core.ProtocolConnection;
 import org.postgresql.core.QueryExecutor;
+import org.postgresql.core.ReplicationProtocol;
 import org.postgresql.core.Utils;
+import org.postgresql.core.v3.replication.V3ReplicationProtocol;
 import org.postgresql.util.HostSpec;
 
 import java.io.IOException;
@@ -34,6 +36,8 @@ import java.util.TimeZone;
  * @author Oliver Jowett (oliver@opencloud.com)
  */
 class ProtocolConnectionImpl implements ProtocolConnection {
+
+
   ProtocolConnectionImpl(PGStream pgStream, String user, String database, Properties info,
       Logger logger, int connectTimeout) {
     this.pgStream = pgStream;
@@ -41,6 +45,7 @@ class ProtocolConnectionImpl implements ProtocolConnection {
     this.database = database;
     this.logger = logger;
     this.executor = new QueryExecutorImpl(this, pgStream, info, logger);
+    this.replicationProtocol = new V3ReplicationProtocol(this.executor, pgStream, logger);
     // default value for server versions that don't report standard_conforming_strings
     this.standardConformingStrings = false;
     this.connectTimeout = connectTimeout;
@@ -91,6 +96,10 @@ class ProtocolConnectionImpl implements ProtocolConnection {
 
   public QueryExecutor getQueryExecutor() {
     return executor;
+  }
+
+  public ReplicationProtocol getReplicationProtocol() {
+    return replicationProtocol;
   }
 
   public void sendQueryCancel() throws SQLException {
@@ -271,6 +280,7 @@ class ProtocolConnectionImpl implements ProtocolConnection {
   private final String user;
   private final String database;
   private final QueryExecutorImpl executor;
+  private final ReplicationProtocol replicationProtocol;
   private final Logger logger;
 
   private final int connectTimeout;

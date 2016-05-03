@@ -185,7 +185,7 @@ public class CopyBothResponseTest {
 
   private Connection openReplicationConnection() throws Exception {
     Properties properties = new Properties();
-    PGProperty.ASSUME_MIN_SERVER_VERSION.set(properties, "9.1");
+    PGProperty.ASSUME_MIN_SERVER_VERSION.set(properties, "9.4");
     PGProperty.PROTOCOL_VERSION.set(properties, "3");
     PGProperty.REPLICATION.set(properties, "database");
     return TestUtil.openDB(properties);
