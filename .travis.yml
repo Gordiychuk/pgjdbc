@@ -2,8 +2,9 @@ sudo: false
 language: java
 
 before_script:
-  - test "x$XA" == 'x' || ./travis_install_dependencies.sh
+  - test "x$XA" == 'x' && test "x$REPLICATION" == 'x' || ./travis_install_dependencies.sh
   - psql -U postgres -c "create user test with password 'test';"
+  - test "x$REPLICATION" == 'x' || psql -U postgres -c "alter user test with replication;"
   - psql -c 'create database test owner test;' -U postgres
   - echo "MAVEN_OPTS='-Xmx1g -Dgpg.skip=true'" > ~/.mavenrc
   - test "x$PG_VERSION" == 'x' || test $PG_VERSION == '8.4' || test $PG_VERSION == '9.0' || psql test -c 'CREATE EXTENSION hstore;' -U postgres
@@ -47,6 +48,7 @@ matrix:
       env:
         - PG_VERSION=9.6
         - XA=true
+        - REPLICATION=Y
         - COVERAGE=Y
     - jdk: oraclejdk8
       sudo: required
@@ -54,6 +56,7 @@ matrix:
       env:
         - PG_VERSION=9.5
         - XA=true
+        - REPLICATION=Y
         - COVERAGE=Y
     - jdk: oraclejdk8
       sudo: required
