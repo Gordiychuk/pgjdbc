@@ -7,11 +7,14 @@ import static org.junit.Assume.assumeThat;
 import org.postgresql.PGConnection;
 import org.postgresql.PGProperty;
 import org.postgresql.test.TestUtil;
+import org.postgresql.test.util.rules.ServerVersionRule;
+import org.postgresql.test.util.rules.annotation.HaveMinimalServerVersion;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -22,9 +25,13 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Properties;
 
+@HaveMinimalServerVersion("9.4")
 public class PhysicalReplicationTest {
 
   private static final String SLOT_NAME = "pgjdbc_physical_replication_slot";
+
+  @Rule
+  public ServerVersionRule versionRule = new ServerVersionRule();
 
   private Connection replConnection;
   private Connection sqlConnection;

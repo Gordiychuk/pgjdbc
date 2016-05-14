@@ -8,6 +8,8 @@ import static org.junit.Assume.assumeThat;
 import org.postgresql.PGConnection;
 import org.postgresql.PGProperty;
 import org.postgresql.test.TestUtil;
+import org.postgresql.test.util.rules.ServerVersionRule;
+import org.postgresql.test.util.rules.annotation.HaveMinimalServerVersion;
 import org.postgresql.util.PSQLException;
 
 import org.hamcrest.CoreMatchers;
@@ -28,9 +30,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+@HaveMinimalServerVersion("9.4")
 public class LogicalReplicationTest {
   private static final String SLOT_NAME = "pgjdbc_logical_replication_slot";
 
+  @Rule
+  public ServerVersionRule versionRule = new ServerVersionRule();
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
@@ -220,7 +225,16 @@ public class LogicalReplicationTest {
     );
   }
 
+  /**
+   * <p>Bug in postgreSQL that should be fixed in 9.7 version after code review patch <a
+   * href="http://www.postgresql.org/message-id/CAFgjRd3hdYOa33m69TbeOfNNer2BZbwa8FFjt2V5VFzTBvUU3w@mail.gmail.com">
+   * Stopping logical replication protocol</a>.
+   *
+   * <p>If you try to run it test on version before 9.7 they fail with time out, because postgresql
+   * wait new changes and until waiting messages from client ignores.
+   */
   @Test(timeout = 1000)
+  @HaveMinimalServerVersion("9.7")
   public void testAfterCloseReplicationStreamDBSlotStatusNotActive() throws Exception {
     PGConnection pgConnection = (PGConnection) replConnection;
 
