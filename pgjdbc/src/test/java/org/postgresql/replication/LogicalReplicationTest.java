@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 @HaveMinimalServerVersion("9.4")
 public class LogicalReplicationTest {
@@ -411,6 +412,95 @@ public class LogicalReplicationTest {
     );
   }
 
+  @Test(timeout = 3000)
+  public void testDoesNotHavePendingMessageWhenStartFromLastLSN() throws Exception {
+    PGConnection pgConnection = (PGConnection) replConnection;
+
+    PGReplicationStream stream =
+        pgConnection
+            .replicationStream()
+            .logical()
+            .withSlotName(SLOT_NAME)
+            .withStartPosition(getCurrentLSN())
+            .start();
+
+    ByteBuffer result = stream.readPending();
+
+    assertThat("Read pending message allow without lock on socket read message, "
+            + "and if message absent return null. In current test we start replication from last LSN on server, "
+            + "so changes absent on server and readPending message will always lead to null ByteBuffer",
+        result, equalTo(null)
+    );
+  }
+
+  @Test(timeout = 3000)
+  public void testReadPreviousChangesWithoutBlock() throws Exception {
+    PGConnection pgConnection = (PGConnection) replConnection;
+
+    LogSequenceNumber startLSN = getCurrentLSN();
+
+    Statement st = sqlConnection.createStatement();
+    st.execute("insert into test_logic_table(name) values('previous changes')");
+    st.close();
+
+    PGReplicationStream stream =
+        pgConnection
+            .replicationStream()
+            .logical()
+            .withSlotName(SLOT_NAME)
+            .withStartPosition(startLSN)
+            .withSlotOption("include-xids", false)
+            .withSlotOption("skip-empty-xacts", true)
+            .start();
+
+    String received = group(receiveMessageWithoutBlock(stream, 3));
+
+    String wait = group(Arrays.asList(
+        "BEGIN",
+        "table public.test_logic_table: INSERT: pk[integer]:1 name[character varying]:'previous changes'",
+        "COMMIT"
+    ));
+
+    assertThat(
+        "Messages from stream can be read by readPending method for avoid long block on Socket, "
+            + "in current test we wait that behavior will be same as for read message with block",
+        received, equalTo(wait)
+    );
+  }
+
+  @Test(timeout = 3000)
+  public void testReadActualChangesWithoutBlock() throws Exception {
+    PGConnection pgConnection = (PGConnection) replConnection;
+
+    PGReplicationStream stream =
+        pgConnection
+            .replicationStream()
+            .logical()
+            .withSlotName(SLOT_NAME)
+            .withStartPosition(getCurrentLSN())
+            .withSlotOption("include-xids", false)
+            .withSlotOption("skip-empty-xacts", true)
+            .start();
+
+    Statement st = sqlConnection.createStatement();
+    st.execute("insert into test_logic_table(name) values('actual changes')");
+    st.close();
+
+    String received = group(receiveMessageWithoutBlock(stream, 3));
+
+    String wait = group(Arrays.asList(
+        "BEGIN",
+        "table public.test_logic_table: INSERT: pk[integer]:1 name[character varying]:'actual changes'",
+        "COMMIT"
+    ));
+
+    assertThat(
+        "Messages from stream can be read by readPending method for avoid long block on Socket, "
+            + "in current test we wait that behavior will be same as for read message with block",
+        received, equalTo(wait)
+    );
+  }
+
   @Test(timeout = 30000 /* backend keep alive 10s * 3 */)
   public void testAvoidTimeoutDisconnectWithDefaultStatusInterval() throws Exception {
     exception.expect(TestTimedOutException.class);
@@ -468,6 +558,25 @@ public class LogicalReplicationTest {
     List<String> result = new ArrayList<String>(count);
     for (int index = 0; index < count; index++) {
       result.add(toString(stream.read()));
+    }
+
+    return result;
+  }
+
+  private List<String> receiveMessageWithoutBlock(PGReplicationStream stream, int count)
+      throws Exception {
+    List<String> result = new ArrayList<String>(3);
+    for (int index = 0; index < count; index++) {
+      ByteBuffer message;
+      do {
+        message = stream.readPending();
+
+        if (message == null) {
+          TimeUnit.MILLISECONDS.sleep(2);
+        }
+      } while (message == null);
+
+      result.add(toString(message));
     }
 
     return result;

@@ -1,6 +1,7 @@
 package org.postgresql.replication;
 
 
+import org.postgresql.replication.fluent.CommonOptions;
 import org.postgresql.replication.fluent.logical.LogicalReplicationOptions;
 
 import java.nio.ByteBuffer;
@@ -27,6 +28,23 @@ public interface PGReplicationStream {
    * received byte array with use offset, so, use {@link ByteBuffer#array()} carefully
    */
   ByteBuffer read() throws SQLException;
+
+  /**
+   * <p>Read next wal record from backend. It method can't be block and in contrast to {@link
+   * PGReplicationStream#read()}. If message from backend absent return null. It allow periodically
+   * check message in stream and if they absent sleep some time, but it time should be less than
+   * {@link CommonOptions#getStatusInterval()} to avoid disconnect from the server.
+   *
+   * <p>A single WAL record is never split across two XLogData messages. When a WAL record crosses a
+   * WAL page boundary, and is therefore already split using continuation records, it can be split
+   * at the page boundary. In other words, the first main WAL record and its continuation records
+   * can be sent in different XLogData messages.
+   *
+   * @return byte array received by replication protocol or null if pending message from server
+   * absent. Returns ByteBuffer wrap around received byte array with use offset, so, use {@link
+   * ByteBuffer#array()} carefully.
+   */
+  ByteBuffer readPending() throws SQLException;
 
   /**
    * Parameter updates by execute {@link PGReplicationStream#read()} method.
