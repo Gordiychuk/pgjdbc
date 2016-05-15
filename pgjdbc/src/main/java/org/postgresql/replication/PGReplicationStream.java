@@ -26,6 +26,7 @@ public interface PGReplicationStream {
    *
    * @return not null byte array received by replication protocol, return ByteBuffer wrap around
    * received byte array with use offset, so, use {@link ByteBuffer#array()} carefully
+   * @throws SQLException when some internal exception occurs during read from stream
    */
   ByteBuffer read() throws SQLException;
 
@@ -43,6 +44,7 @@ public interface PGReplicationStream {
    * @return byte array received by replication protocol or null if pending message from server
    * absent. Returns ByteBuffer wrap around received byte array with use offset, so, use {@link
    * ByteBuffer#array()} carefully.
+   * @throws SQLException when some internal exception occurs during read from stream
    */
   ByteBuffer readPending() throws SQLException;
 
@@ -91,9 +93,10 @@ public interface PGReplicationStream {
   /**
    * Force send to backend status about last received, flushed and applied LSN. You can not use it
    * method explicit, because {@link PGReplicationStream} send status to backend periodical by
-   * configured interval via {@link LogicalReplicationOptions#getStatusInterval()}
+   * configured interval via {@link LogicalReplicationOptions#getStatusInterval}
    *
    * @see LogicalReplicationOptions#getStatusInterval()
+   * @throws SQLException when some internal exception occurs during read from stream
    */
   void forceUpdateStatus() throws SQLException;
 
