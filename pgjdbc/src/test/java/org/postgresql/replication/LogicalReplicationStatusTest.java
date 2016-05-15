@@ -90,7 +90,11 @@ public class LogicalReplicationStatusTest {
     );
   }
 
+  /**
+   * Test fail on PG version 9.4.5 because postgresql have bug
+   */
   @Test
+  @HaveMinimalServerVersion("9.4.8")
   public void testReceivedLSNDependentOnProcessMessage() throws Exception {
     PGConnection pgConnection = (PGConnection) replicationConnection;
 
@@ -288,7 +292,11 @@ public class LogicalReplicationStatusTest {
     );
   }
 
+  /**
+   * Test fail on PG version 9.4.5 because postgresql have bug
+   */
   @Test
+  @HaveMinimalServerVersion("9.4.8")
   public void testApplyLocationDoNotDependOnFlushLocation() throws Exception {
     PGConnection pgConnection = (PGConnection) replicationConnection;
 
