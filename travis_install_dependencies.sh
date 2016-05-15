@@ -5,13 +5,17 @@ set -x -e
 sudo service postgresql stop
 sudo cp /etc/postgresql/9.1/main/pg_hba.conf ./
 
-sudo apt-get remove postgresql libpq-dev libpq5 postgresql-client-common postgresql-common -qq --purge
-source /etc/lsb-release
-echo "deb http://apt.postgresql.org/pub/repos/apt/ $DISTRIB_CODENAME-pgdg main ${PG_VERSION}" > pgdg.list
-sudo mv pgdg.list /etc/apt/sources.list.d/
-wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update
-sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install postgresql-${PG_VERSION} postgresql-contrib-${PG_VERSION} -qq
+if [ ! -d "/etc/postgresql/${PG_VERSION}/main" ];
+then
+    # Control will enter here if $DIRECTORY doesn't exist.
+    sudo apt-get remove postgresql libpq-dev libpq5 postgresql-client-common postgresql-common -qq --purge
+    source /etc/lsb-release
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ $DISTRIB_CODENAME-pgdg main ${PG_VERSION}" > pgdg.list
+    sudo mv pgdg.list /etc/apt/sources.list.d/
+    wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
+    sudo apt-get update
+    sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install postgresql-${PG_VERSION} postgresql-contrib-${PG_VERSION} -qq
+fi
 
 if [ ${PG_VERSION} = '8.4' ]
 then

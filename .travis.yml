@@ -69,10 +69,12 @@ matrix:
       env: RUN_CHECKSTYLE=true
       script: mvn checkstyle:check
     - jdk: oraclejdk8
-      addons:
-        postgresql: "9.4"
+      sudo: required
+      dist: trusty
       env:
         - PG_VERSION=9.4
+        - XA=true
+        - REPLICATION=Y
         - COVERAGE=Y
         - MCENTRAL=Y
     - jdk: openjdk7
